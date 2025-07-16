@@ -275,7 +275,7 @@ export default function Home() {
             <p className="mb-2">🎵 <strong>How to stream in external players:</strong></p>
             <div className="space-y-1 text-left max-w-2xl mx-auto">
               <p><strong>foobar2000:</strong> Download M3U playlist above, then drag into foobar2000</p>
-              <p><strong>VLC:</strong> Click "Open in VLC" button or use Media → Open Network Stream with individual URLs</p>
+              <p><strong>VLC:</strong> Click &quot;Open in VLC&quot; button or use Media → Open Network Stream with individual URLs</p>
               <p><strong>Any Player:</strong> Copy stream URLs and paste into your preferred audio player</p>
             </div>
           </div>

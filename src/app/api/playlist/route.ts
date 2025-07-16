@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+interface AudioFile {
+  key: string
+  name: string
+  size: number
+  url: string
+}
+
+interface FilesResponse {
+  files: AudioFile[]
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -13,8 +24,8 @@ export async function GET(req: NextRequest) {
       throw new Error('Failed to fetch files')
     }
     
-    const { files } = await filesResponse.json()
-    const audioFiles = files.filter((file: any) => {
+    const { files }: FilesResponse = await filesResponse.json()
+    const audioFiles = files.filter((file: AudioFile) => {
       const ext = file.key.toLowerCase().split('.').pop()
       return ['flac', 'mp3', 'wav', 'ogg', 'aac', 'm4a'].includes(ext || '')
     })
@@ -44,7 +55,7 @@ export async function GET(req: NextRequest) {
     
     // Default JSON format
     return NextResponse.json({
-      files: audioFiles.map((file: any) => ({
+      files: audioFiles.map((file: AudioFile) => ({
         name: file.key.split('/').pop() || file.key,
         url: `${baseUrl}/api/stream?key=${encodeURIComponent(file.key)}`,
         key: file.key,

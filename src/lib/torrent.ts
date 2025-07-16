@@ -27,6 +27,7 @@ export async function parseTorrentFile(filePath: string): Promise<TorrentInfo> {
   console.log('Buffer size:', torrentBuffer.length)
   
   // Try multiple parsing approaches
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let torrentData: any = null
   let parseMethod = ''
   
@@ -48,6 +49,7 @@ export async function parseTorrentFile(filePath: string): Promise<TorrentInfo> {
   if (!torrentData || !torrentData.name || (!torrentData.files && !torrentData.length)) {
     try {
       console.log('Trying manual bencode parsing...')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const decoded = bencode.decode(torrentBuffer) as any
       
       const info = decoded.info
@@ -135,6 +137,7 @@ export async function parseTorrentFile(filePath: string): Promise<TorrentInfo> {
   
   if (torrentData.files && Array.isArray(torrentData.files)) {
     // Multi-file torrent
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     files = torrentData.files.map((file: any, index: number) => {
       let fileName: string
       let filePath: string[]
@@ -143,6 +146,7 @@ export async function parseTorrentFile(filePath: string): Promise<TorrentInfo> {
       if (parseMethod === 'manual-bencode') {
         // Handle bencode format (Buffers/Uint8Arrays)
         if (file.path && Array.isArray(file.path)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           filePath = file.path.map((p: any) => {
             if (Buffer.isBuffer(p)) {
               return p.toString('utf8')

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth'
 import { uploadToR2, createTempDirectory, cleanupTempFiles, getTempDirectorySize } from '@/lib/storage'
 import { promises as fs } from 'fs'
+import { createWriteStream } from 'fs'
 import path from 'path'
 import torrentStream from 'torrent-stream'
 
@@ -61,7 +62,7 @@ async function handleDownload(req: NextRequest) {
               console.log(`Downloading file: ${file.name} (${file.length} bytes)`)
               
               const localPath = path.join(downloadDir, file.name)
-              const writeStream = require('fs').createWriteStream(localPath)
+              const writeStream = createWriteStream(localPath)
               
               file.createReadStream().pipe(writeStream)
               
@@ -85,7 +86,7 @@ async function handleDownload(req: NextRequest) {
                 }
               })
               
-              writeStream.on('error', (error: any) => {
+              writeStream.on('error', (error: Error) => {
                 console.error(`Error writing ${file.name}:`, error)
                 engine.destroy(() => {})
                 reject(error)
@@ -106,7 +107,7 @@ async function handleDownload(req: NextRequest) {
           }
         })
         
-        engine.on('error', (error: any) => {
+        engine.on('error', (error: Error) => {
           console.error('Torrent engine error:', error)
           engine.destroy(() => {})
           reject(error)
