@@ -1,4 +1,4 @@
-import { FtpSrv, FileSystem } from 'ftp-srv'
+import { FtpSrv, FileSystem, FtpConnection } from 'ftp-srv'
 import { ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import { r2Client, R2_BUCKET_NAME } from './r2'
 import { Readable } from 'stream'
@@ -8,7 +8,7 @@ import path from 'path'
 class R2FileSystem extends FileSystem {
   private r2Server: R2FtpServer
 
-  constructor(connection: any, { root, cwd }: { root: string; cwd: string }, r2Server: R2FtpServer) {
+  constructor(connection: FtpConnection, { root, cwd }: { root: string; cwd: string }, r2Server: R2FtpServer) {
     super(connection, { root, cwd })
     this.r2Server = r2Server
   }
