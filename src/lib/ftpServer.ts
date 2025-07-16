@@ -1,8 +1,49 @@
-import { FtpSrv } from 'ftp-srv'
+import { FtpSrv, FileSystem } from 'ftp-srv'
 import { ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import { r2Client, R2_BUCKET_NAME } from './r2'
 import { Readable } from 'stream'
 import path from 'path'
+
+// Custom FileSystem class that extends ftp-srv FileSystem
+class R2FileSystem extends FileSystem {
+  private r2Server: R2FtpServer
+
+  constructor(connection: any, { root, cwd }: { root: string; cwd: string }, r2Server: R2FtpServer) {
+    super(connection, { root, cwd })
+    this.r2Server = r2Server
+  }
+
+  async list(dirPath: string = this.cwd): Promise<Record<string, unknown>[]> {
+    console.log(`FTP: Listing directory ${dirPath}`)
+    return this.r2Server.listR2Files(dirPath)
+  }
+
+  async get(fileName: string): Promise<Readable> {
+    console.log(`FTP: Getting file ${fileName}`)
+    return this.r2Server.getR2FileStream(fileName)
+  }
+
+  async chdir(dirPath: string): Promise<string> {
+    console.log(`FTP: Changing directory to ${dirPath}`)
+    return dirPath
+  }
+
+  async write(): Promise<never> {
+    throw new Error('Write operations not supported')
+  }
+
+  async delete(): Promise<never> {
+    throw new Error('Delete operations not supported')
+  }
+
+  async mkdir(): Promise<never> {
+    throw new Error('Mkdir operations not supported')
+  }
+
+  async rename(): Promise<never> {
+    throw new Error('Rename operations not supported')
+  }
+}
 
 export class R2FtpServer {
   private ftpServer: FtpSrv
@@ -41,21 +82,10 @@ export class R2FtpServer {
       if (username === this.username && password === this.password) {
         console.log('FTP login successful')
         
-        // Override file system methods using any type to bypass TypeScript checks
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const conn = connection as any
-        
-        conn.fs.list = async (dirPath: string) => {
-          console.log(`FTP: Listing directory ${dirPath}`)
-          return this.listR2Files(dirPath)
-        }
-        
-        conn.fs.get = async (fileName: string) => {
-          console.log(`FTP: Getting file ${fileName}`)
-          return this.getR2FileStream(fileName)
-        }
-        
-        resolve({ root: '/' })
+        resolve({ 
+          root: '/',
+          fs: new R2FileSystem(connection, { root: '/', cwd: '/' }, this)
+        })
       } else {
         console.log('FTP login failed')
         reject(new Error('Invalid credentials'))
@@ -67,7 +97,7 @@ export class R2FtpServer {
     })
   }
 
-  private async listR2Files(dirPath: string): Promise<Record<string, unknown>[]> {
+  public async listR2Files(dirPath: string): Promise<Record<string, unknown>[]> {
     try {
       // Remove leading slash
       const prefix = dirPath.startsWith('/') ? dirPath.slice(1) : dirPath
@@ -132,7 +162,7 @@ export class R2FtpServer {
     }
   }
 
-  private async getR2FileStream(fileName: string): Promise<Readable> {
+  public async getR2FileStream(fileName: string): Promise<Readable> {
     try {
       // Remove leading slash
       const key = fileName.startsWith('/') ? fileName.slice(1) : fileName
